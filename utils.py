@@ -1,3 +1,4 @@
+import secrets
 from pathlib import Path
 from urllib.parse import unquote_plus
 
@@ -35,6 +36,36 @@ def get_basename(key: str) -> str:
 
 
 
+def extract_session_id(input_key: str) -> str:
+    """Extract sessionId from input key path.
+    
+    Expected format: uploads/<sessionId>/<filename>.<ext>
+    Returns sessionId or empty string if not found.
+    """
+    parts = input_key.split('/')
+    if len(parts) >= 2 and parts[0] == "uploads":
+        return parts[1]
+    return ""
+
+
+def _generate_random_suffix() -> str:
+    """Generate a 6-character random suffix to prevent filename collisions."""
+    chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+    return ''.join(secrets.choice(chars) for _ in range(6))
+
+
 def build_output_key(input_key: str) -> str:
-    """Map uploads/<name>.<ext> to outputs/<name>.jpg."""
-    return f"outputs/{get_basename(input_key)}.jpg"
+    """Map uploads/<sessionId>/<filename>.<ext> to outputs/<sessionId>/<filename>-<suffix>.jpg.
+    
+    Preserves sessionId and adds random suffix to prevent collisions.
+    Falls back to flat structure if sessionId is not present.
+    """
+    session_id = extract_session_id(input_key)
+    filename = get_basename(input_key)
+    suffix = _generate_random_suffix()
+    
+    if session_id:
+        return f"outputs/{session_id}/{filename}-{suffix}.jpg"
+    
+    # Fallback: no sessionId in path
+    return f"outputs/{filename}-{suffix}.jpg"

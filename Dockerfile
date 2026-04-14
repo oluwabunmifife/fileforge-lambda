@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/python:3.12
 
-RUN dnf install -y libheif
+RUN dnf install -y libheif libde265
 
 COPY requirements.txt .
 
